@@ -77,10 +77,27 @@ function Form({ onAddItems }) {
 }
 
 function PackingList({ items, onDeleteItem, onToggleItem }) {
+  const [sortBy, setSortBy] = useState("input");
+
+  let sortedItems;
+
+  if (sortBy === "input") sortedItems = items;
+
+  if (sortBy === "description"){
+  let collator = new Intl.Collator();
+    sortedItems = items
+      .slice()
+      .sort((a, b) =>collator.compare(a.description, b.description))
+  }
+  if (sortBy === "packed")
+    sortedItems = items
+      .slice()
+      .sort((a, b) => Number(a.packed) - Number(b.packed));
+
   return (
     <div className="list">
       <ul className="list ul">
-        {items.map((item) => (
+        {sortedItems.map((item) => (
           <Item
             item={item}
             onDeleteItem={onDeleteItem}
@@ -89,6 +106,13 @@ function PackingList({ items, onDeleteItem, onToggleItem }) {
           />
         ))}
       </ul>
+      <div className="actions">
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="input">Сортировка по порядку ввода</option>
+          <option value="description">Сортировка по алфавиту</option>
+          <option value="packed">Сортировка упакованных вещей</option>
+        </select>
+      </div>
     </div>
   );
 }
@@ -102,13 +126,15 @@ function Item({ item, onDeleteItem, onToggleItem }) {
         onChange={() => onToggleItem(item.id)}
       />
       <span style={item.packed ? { textDecoration: "line-through" } : {}}>
-        {item.quantity}
-        {item.description}
+        {item.quantity} {item.description}
       </span>
       <button onClick={() => onDeleteItem(item.id)}>❌</button>
     </li>
   );
 }
+
+
+
 
 function Stats({ items }) {
   if (!items.length)
@@ -121,7 +147,7 @@ function Stats({ items }) {
   const numItems = items.length;
   const numPacked = items.filter((item) => item.packed).length;
   const percentage = Math.round((numPacked / numItems) * 100);
-  
+
   return (
     <footer className="stats">
       <em>
